@@ -50,7 +50,10 @@ class UserRegister(Resource):
         help = 'Password cannot be blank'
     )
     def post(self):
-        data = parser.parse_args()
+        data = UserRegister.parser.parse_args()
+        if User.find_by_username(data['username']):
+            return {'message':'Username already exists'},400
+
         conn = sqlite3.connect('data.db')
         cursor = conn.cursor()
 
