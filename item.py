@@ -34,15 +34,21 @@ class Item(Resource):
 
         data = Item.request_parser.parse_args()
         item = {'name': name, 'price':data['price']}
+        try:
+            self.insert_func(item)
+        except:
+            return {'message':'An error occured'}, 500
 
+        return item, 201
+
+    @classmethod
+    def insert(cls, item):
         conn = sqlite3.connect('data.db')
         cursor = conn.cursor()
         insert_query = 'INSERT INTO ITEMS VALUES(?, ?)'
         cursor.execute(insert_query, (item['name'], item['price']))
         conn.commit()
         conn.close()
-
-        return item, 201
 
     def delete(self, name):
         item = self.find_by_name(name)
@@ -59,13 +65,30 @@ class Item(Resource):
 
     def put(self, name):
         data = Item.request_parser.parse_args()
-        item = next(filter(lambda x: x['name']==name, items),None)
+        item = self.find_by_name(name)
+        update_item = {'name': name, 'price': data['price']}
         if item is None:
-            item = {'name': name, 'price': data['price']}
-            items.append(item)
+            try:
+                self.insert(update_item)
+            except:
+                return {'message': 'An error occured'}, 500
         else:
-            item.update(data)  #Careful
-        return item
+            try:
+                self.update(update_item)
+            except:
+                return {'message':'An error occured'}, 500
+
+        return update_item
+
+    @classmethod
+    def update(cls, item):
+        conn = sqlite3.connect('data.db')
+        cursor = conn.cursor()
+        update_query = 'UPDATE ITEMS SET price=? WHERE name=?'
+        cursor.execute(update_query, (item['price'],item['name']))
+        conn.commit()
+        conn.close()
+        return {'message':'Item deleted'}
 
 class ItemList(Resource):
     def get(self):
