@@ -35,7 +35,7 @@ class Item(Resource):
         data = Item.request_parser.parse_args()
         item = {'name': name, 'price':data['price']}
         try:
-            self.insert_func(item)
+            self.insert(item)
         except:
             return {'message':'An error occured'}, 500
 
@@ -92,4 +92,16 @@ class Item(Resource):
 
 class ItemList(Resource):
     def get(self):
-        return {'items': items}
+        conn = sqlite3.connect('data.db')
+        cursor = conn.cursor()
+
+        query = 'SELECT * FROM ITEMS'
+        result = cursor.execute(query).fetchall()
+        items = []
+        for row in result:
+            items.append({'name':row[0], 'price':row[1]})
+
+        conn.commit()
+        conn.close()
+
+        return {'items':items}
