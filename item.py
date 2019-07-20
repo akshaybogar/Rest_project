@@ -45,9 +45,17 @@ class Item(Resource):
         return item, 201
 
     def delete(self, name):
-        global items
-        items = list(filter(lambda x: x['name']!=name, items))
-        return {'message':'Item deleted'}
+        item = self.find_by_name(name)
+        if not item:
+            return {'message': 'Item with given username does not exist'}
+        else:
+            conn = sqlite3.connect('data.db')
+            cursor = conn.cursor()
+            delete_query = 'DELETE FROM ITEMS WHERE name=?'
+            cursor.execute(delete_query, (name,))
+            conn.commit()
+            conn.close()
+            return {'message':'Item deleted'}
 
     def put(self, name):
         data = Item.request_parser.parse_args()
