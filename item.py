@@ -9,8 +9,8 @@ class Item(Resource):
     required = True,
     help = 'Enter price of the item')
 
-    @jwt_required()
-    def get(self,name):
+    @classmethod
+    def find_by_name(cls, name):
         conn = sqlite3.connect('data.db')
         cursor = conn.cursor()
         query = 'SELECT * FROM ITEMS WHERE name = ?'
@@ -18,16 +18,30 @@ class Item(Resource):
         row = result.fetchone()
         conn.close()
         if row:
-            return {'name':row[0], 'price':row[1]}
+            return {'item':{'name':row[0], 'price':row[1]}}
+
+
+    @jwt_required()
+    def get(self,name):
+        item = self.find_by_name(name)
+        if item:
+            return item
         return {'message': 'Item not found'}, 404
 
     def post(self, name):
-        if(next(filter(lambda x: x['name'] == name, items), None)):
+        if(self.find_by_name(name)):
             return {'message':'Item with {} name already exists'.format(name)}, 400
 
         data = Item.request_parser.parse_args()
         item = {'name': name, 'price':data['price']}
-        items.append(item)
+
+        conn = sqlite3.connect('data.db')
+        cursor = conn.cursor()
+        insert_query = 'INSERT INTO ITEMS VALUES(?, ?)'
+        cursor.execute(insert_query, (item['name'], item['price']))
+        conn.commit()
+        conn.close()
+
         return item, 201
 
     def delete(self, name):
