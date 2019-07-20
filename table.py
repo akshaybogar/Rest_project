@@ -5,7 +5,12 @@ conn = sqlite3.connect('data.db')
 cursor = conn.cursor()
 
 create_query = 'CREATE TABLE IF NOT EXISTS USERS(id INTEGER PRIMARY KEY, username text, password text)'
-conn.execute(create_query)
+cursor.execute(create_query)
+
+create_query = 'CREATE TABLE IF NOT EXISTS ITEMS(name text, price real)'
+cursor.execute(create_query)
+
+insert_query = 'INSERT INTO ITEMS VALUES("test_item", 9.99)'
 
 conn.commit()
 conn.close()

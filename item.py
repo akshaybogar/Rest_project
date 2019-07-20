@@ -11,11 +11,15 @@ class Item(Resource):
 
     @jwt_required()
     def get(self,name):
-        #for item in items:
-        #    if(item['name'] == name):
-        #        return item
-        item = next(filter(lambda x: x['name'] == name, items), None)
-        return {'item':item}, 200 if item else 404
+        conn = sqlite3.connect('data.db')
+        cursor = conn.cursor()
+        query = 'SELECT * FROM ITEMS WHERE name = ?'
+        result = cursor.execute(query, (name,))
+        row = result.fetchone()
+        conn.close()
+        if row:
+            return {'name':row[0], 'price':row[1]}
+        return {'message': 'Item not found'}, 404
 
     def post(self, name):
         if(next(filter(lambda x: x['name'] == name, items), None)):
